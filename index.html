@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Textale（修正版）</title>
+    <title>Textale（修正版2）</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&display=swap" rel="stylesheet">
@@ -216,38 +216,23 @@
 
         // アプリケーションの状態
         let currentPage = 1;
-        let pages = ['']; // 各ページに表示するテキストのスライスを格納
+        let pages = ['']; 
 
-        /**
-         * テキストをページに分割するコアロジック（修正版）
-         * @param {string} text - 全文テキスト
-         * @returns {string[]} - ページ分割されたテキストの配列
-         */
         function paginateText(text) {
             if (!text) {
                 return [''];
             }
-
-            // 改行コードを正規化 (CRLF -> LF)
             const normalizedText = text.replace(/\r\n/g, '\n');
-
-            // 2行以上の改行でセクションに分割
             const sections = normalizedText.split(/\n{2,}/);
-
             const paginated = [];
 
             for (const sectionText of sections) {
                 let currentSectionText = sectionText;
-
-                // 空のセクションは無視する
                 if (currentSectionText.trim().length === 0) {
                     continue;
                 }
-
-                // セクションごとにページ分割を行う
                 while (currentSectionText.length > 0) {
                     measuringDiv.textContent = '';
-
                     let i = 0;
                     for (i = 0; i < currentSectionText.length; i++) {
                         measuringDiv.textContent = currentSectionText.substring(0, i + 1);
@@ -255,19 +240,16 @@
                             break;
                         }
                     }
-                    
                     const pageText = currentSectionText.substring(0, i);
                     paginated.push(pageText);
                     currentSectionText = currentSectionText.substring(i);
                 }
             }
-
-            // 何もテキストがない場合は、空の1ページとして扱う
             return paginated.length > 0 ? paginated : [''];
         }
 
         /**
-         * 指定されたページのプレビューを更新する
+         * 指定されたページのプレビューを更新する (修正版)
          */
         function renderPreview() {
             if (pages.length === 0) {
@@ -277,20 +259,36 @@
 
             const textForCurrentPage = pages[currentPage - 1];
             
-            // 1ページ目のみオーバーフローを表示
+            // まず現在のページ内容だけを描画
+            previewContent.textContent = textForCurrentPage;
+
+            // 1ページ目で、かつ複数ページが存在する場合のみ、オーバーフロー表示を検討
             if (currentPage === 1 && pages.length > 1) {
-                const textForNextPage = pages[1];
-                previewContent.innerHTML = `<span>${textForCurrentPage}</span><span class="overflow-marker">${textForNextPage}</span>`;
-            } else {
-                previewContent.textContent = textForCurrentPage;
+                
+                // 1ページ目が高さによって分割された結果なのかを判定
+                const fullText = textInput.value;
+                const normalizedText = fullText.replace(/\r\n/g, '\n');
+                const sections = normalizedText.split(/\n{2,}/);
+
+                let isOverflowSplit = false;
+                // 有効な最初のセクションを見つける
+                const firstValidSection = sections.find(s => s.trim().length > 0) || "";
+
+                // 1ページ目の内容が、最初のセクションの途中で終わっているか確認
+                if (firstValidSection.startsWith(pages[0]) && pages[0].length < firstValidSection.length) {
+                    isOverflowSplit = true;
+                }
+                
+                // 高さによる自動分割の場合のみ、赤いハイライトを表示する
+                if (isOverflowSplit) {
+                    const textForNextPage = pages[1];
+                    previewContent.innerHTML = `<span>${textForCurrentPage}</span><span class="overflow-marker">${textForNextPage}</span>`;
+                }
             }
             
             updateControls();
         }
         
-        /**
-         * UIコントロール（ボタン、ページ表示）の状態を更新する
-         */
         function updateControls() {
             const totalPages = pages.length || 1;
             pageIndicator.textContent = `${currentPage} / ${totalPages}`;
@@ -299,18 +297,13 @@
             downloadBtn.disabled = textInput.value.trim().length === 0;
         }
 
-        /**
-         * テキスト入力時のメイン処理
-         */
         function handleTextInput() {
             const fullText = textInput.value;
             pages = paginateText(fullText);
-            
             currentPage = 1;
             renderPreview();
         }
 
-        // イベントリスナーの設定
         textInput.addEventListener('input', handleTextInput);
 
         prevPageBtn.addEventListener('click', () => {
@@ -383,13 +376,11 @@
 
             statusMessage.textContent = 'ZIPファイルを生成中...';
             const zipBlob = await zip.generateAsync({ type: 'blob' });
-
             const downloadLink = document.createElement('a');
             downloadLink.href = URL.createObjectURL(zipBlob);
             downloadLink.download = 'novel_images.zip';
             downloadLink.click();
             URL.revokeObjectURL(downloadLink.href);
-            
             statusMessage.textContent = 'ダウンロードが完了しました！';
             downloadBtn.disabled = false;
         });
@@ -404,7 +395,6 @@
 
         // 初期化処理
         handleTextInput();
-
     </script>
 </body>
 </html>
