@@ -228,29 +228,43 @@
                 return [''];
             }
 
+            // 改行正規化（CRLF → LF）
+            const normalized = text.replace(/\r\n/g, '\n');
+
+            // 2行以上の改行で強制改ページ
+            const sections = normalized.split(/\n{2,}/);
+
             const paginated = [];
-            let currentText = text;
 
-            while (currentText.length > 0) {
-                // 計測用divをリセット
-                measuringDiv.textContent = '';
+            for (let s = 0; s < sections.length; s++) {
+                let sectionText = sections[s];
 
-                let i = 0;
-                for (i = 0; i < currentText.length; i++) {
-                    measuringDiv.textContent = currentText.substring(0, i + 1);
-                    if (measuringDiv.scrollHeight > CONTENT_HEIGHT) {
-                        // 1文字追加したことで高さを超えた場合、その1文字手前で分割
-                        break;
-                    }
+                // 空セクションはスキップ（連続改ページを空ページとして扱いたい場合はここで push('') する）
+                if (sectionText.length === 0) {
+                    continue;
                 }
-                
-                // 1ページに収まるテキストを見つける
-                const pageText = currentText.substring(0, i);
-                paginated.push(pageText);
-                currentText = currentText.substring(i);
+
+                // セクションごとに必ず新しいページから開始
+                while (sectionText.length > 0) {
+                    // 計測用divをリセット
+                    measuringDiv.textContent = '';
+
+                    let i = 0;
+                    for (i = 0; i < sectionText.length; i++) {
+                        measuringDiv.textContent = sectionText.substring(0, i + 1);
+                        if (measuringDiv.scrollHeight > CONTENT_HEIGHT) {
+                            // 1文字追加したことで高さを超えた場合、その1文字手前で分割
+                            break;
+                        }
+                    }
+
+                    const pageText = sectionText.substring(0, i);
+                    paginated.push(pageText);
+                    sectionText = sectionText.substring(i);
+                }
             }
 
-            return paginated;
+            return paginated.length > 0 ? paginated : [''];
         }
 
         /**
