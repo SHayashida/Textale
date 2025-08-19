@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Textale（最終版）</title>
+    <title>Textale（修正版）</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&display=swap" rel="stylesheet">
@@ -84,7 +84,6 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
             overflow: hidden;
             position: relative;
-            transform-origin: top;
         }
         
         #preview-content-wrapper {
@@ -167,7 +166,9 @@
             line-height: var(--line-height); padding: var(--padding);
             width: var(--image-width); height: var(--image-height);
             box-sizing: border-box; white-space: pre-wrap; word-wrap: break-word;
-            transform-origin: top left; overflow: hidden;
+            /* transform-origin: top left;  <-- この行を削除 */
+            overflow: hidden;
+            flex-shrink: 0; /* 追加: flexアイテムが縮小しないように */
         }
         .modal-nav {
             position: absolute; top: 50%; transform: translateY(-50%);
