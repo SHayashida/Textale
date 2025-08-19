@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Textale</title>
+    <title>Textale（修正版）</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&display=swap" rel="stylesheet">
@@ -219,7 +219,7 @@
         let pages = ['']; // 各ページに表示するテキストのスライスを格納
 
         /**
-         * テキストをページに分割するコアロジック
+         * テキストをページに分割するコアロジック（修正版）
          * @param {string} text - 全文テキスト
          * @returns {string[]} - ページ分割されたテキストの配列
          */
@@ -228,42 +228,41 @@
                 return [''];
             }
 
-            // 改行正規化（CRLF → LF）
-            const normalized = text.replace(/\r\n/g, '\n');
+            // 改行コードを正規化 (CRLF -> LF)
+            const normalizedText = text.replace(/\r\n/g, '\n');
 
-            // 2行以上の改行で強制改ページ
-            const sections = normalized.split(/\n{2,}/);
+            // 2行以上の改行でセクションに分割
+            const sections = normalizedText.split(/\n{2,}/);
 
             const paginated = [];
 
-            for (let s = 0; s < sections.length; s++) {
-                let sectionText = sections[s];
+            for (const sectionText of sections) {
+                let currentSectionText = sectionText;
 
-                // 空セクションはスキップ（連続改ページを空ページとして扱いたい場合はここで push('') する）
-                if (sectionText.length === 0) {
+                // 空のセクションは無視する
+                if (currentSectionText.trim().length === 0) {
                     continue;
                 }
 
-                // セクションごとに必ず新しいページから開始
-                while (sectionText.length > 0) {
-                    // 計測用divをリセット
+                // セクションごとにページ分割を行う
+                while (currentSectionText.length > 0) {
                     measuringDiv.textContent = '';
 
                     let i = 0;
-                    for (i = 0; i < sectionText.length; i++) {
-                        measuringDiv.textContent = sectionText.substring(0, i + 1);
+                    for (i = 0; i < currentSectionText.length; i++) {
+                        measuringDiv.textContent = currentSectionText.substring(0, i + 1);
                         if (measuringDiv.scrollHeight > CONTENT_HEIGHT) {
-                            // 1文字追加したことで高さを超えた場合、その1文字手前で分割
                             break;
                         }
                     }
-
-                    const pageText = sectionText.substring(0, i);
+                    
+                    const pageText = currentSectionText.substring(0, i);
                     paginated.push(pageText);
-                    sectionText = sectionText.substring(i);
+                    currentSectionText = currentSectionText.substring(i);
                 }
             }
 
+            // 何もテキストがない場合は、空の1ページとして扱う
             return paginated.length > 0 ? paginated : [''];
         }
 
@@ -281,7 +280,6 @@
             // 1ページ目のみオーバーフローを表示
             if (currentPage === 1 && pages.length > 1) {
                 const textForNextPage = pages[1];
-                // 1ページ目と2ページ目のテキストを結合し、2ページ目部分をspanで囲む
                 previewContent.innerHTML = `<span>${textForCurrentPage}</span><span class="overflow-marker">${textForNextPage}</span>`;
             } else {
                 previewContent.textContent = textForCurrentPage;
@@ -308,9 +306,7 @@
             const fullText = textInput.value;
             pages = paginateText(fullText);
             
-            // 入力があったら必ず1ページ目に戻る
             currentPage = 1;
-            
             renderPreview();
         }
 
@@ -345,7 +341,6 @@
                 statusMessage.textContent = `${i + 1} / ${pages.length} 枚目の画像を生成中...`;
                 const pageText = pages[i];
                 
-                // SVGのforeignObjectを使ってHTMLのレンダリング結果を画像化
                 const svgData = `
                     <svg xmlns="http://www.w3.org/2000/svg" width="${IMAGE_WIDTH}" height="${IMAGE_HEIGHT}">
                         <foreignObject width="100%" height="100%">
@@ -399,11 +394,6 @@
             downloadBtn.disabled = false;
         });
         
-        /**
-         * HTMLエスケープ関数
-         * @param {string} str 
-         * @returns {string}
-         */
         function escapeHTML(str) {
             return str.replace(/&/g, '&amp;')
                       .replace(/</g, '&lt;')
