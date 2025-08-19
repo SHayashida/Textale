@@ -225,19 +225,48 @@
     const btnClear = el('btnClear');
     const preview = el('preview');
 
-  btnGenerate.addEventListener('click', () => {
-    // X（旧Twitter）シェアボタン
+    // X（旧Twitter）シェアボタン - ハンドラはトップレベルで登録する
     const btnShareX = el('btnShareX');
     if (btnShareX) {
-      btnShareX.addEventListener('click', () => {
+      // 明示的にボタンの type を設定（フォーム submit を防ぐ）
+      btnShareX.type = 'button';
+      btnShareX.addEventListener('click', async () => {
         const shareText = 'テキスト→画像 分割ツール"Textale" https://shayashida.github.io/Textale/';
+        const shareUrl = 'https://shayashida.github.io/Textale/';
+
+        // 1) ネイティブ共有が使える端末（スマホ等）は優先
+        if (navigator.share) {
+          try {
+            await navigator.share({ title: 'Textale', text: shareText, url: shareUrl });
+            return;
+          } catch (err) {
+            // ユーザーキャンセルやエラーはフォールバックへ
+          }
+        }
+
+        // 2) X の intent へポップアップを開く（デスクトップ向け）
         const xUrl = `https://x.com/intent/tweet?text=${encodeURIComponent(shareText)}`;
-        const w = 600, h = 480;
-        const left = window.screenX + (window.outerWidth - w) / 2;
-        const top = window.screenY + (window.outerHeight - h) / 2;
-        window.open(xUrl, 'shareX', `width=${w},height=${h},left=${left},top=${top},menubar=no,toolbar=no,status=no,scrollbars=yes`);
+        try {
+          const w = 600, h = 480;
+          const left = (window.screenX || 0) + (((window.outerWidth || window.innerWidth) - w) / 2);
+          const top = (window.screenY || 0) + (((window.outerHeight || window.innerHeight) - h) / 2);
+          const win = window.open(xUrl, 'shareX', `width=${w},height=${h},left=${Math.round(left)},top=${Math.round(top)},menubar=no,toolbar=no,status=no,scrollbars=yes`);
+          if (win) { win.focus(); return; }
+        } catch (e) {
+          // fall through to anchor fallback
+        }
+
+        // 3) 最終フォールバック：一時的なリンクを生成してクリック（ポップアップブロッカー回避）
+        const a = document.createElement('a');
+        a.href = xUrl;
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
       });
     }
+    btnGenerate.addEventListener('click', () => {
       const text = (inputText.value || '').replace(/\r\n/g, '\n');
       if (!text.trim()) {
         preview.innerHTML = '<div class="note">テキストを入力してください。</div>';
