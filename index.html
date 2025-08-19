@@ -127,7 +127,7 @@
 </head>
 <body>
   <header>
-    <h1>テキスト→画像 分割ツール"Textale</h1>
+    <h1>テキスト→画像 分割ツール"Textale"</h1>
     <div class="note">ダブル改行で次の画像に繰り下げ。自動折り返し・高さあふれでページ分割。PNG保存対応。</div>
   </header>
 
@@ -196,7 +196,13 @@
     <section class="panel">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px;">
         <div><strong>プレビュー</strong></div>
-        <div class="note">各画像をタップ長押しで保存 (またはボタンで保存)。</div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <button id="btnShareX" class="secondary" style="display:flex;align-items:center;gap:4px;padding:6px 10px;font-size:14px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3L7 21"/><path d="M4 7h16"/><path d="M4 17h16"/></svg>
+            <span>Xでシェア</span>
+          </button>
+          <div class="note">各画像をタップ長押しで保存 (またはボタンで保存)。</div>
+        </div>
       </div>
       <div id="preview" class="preview"></div>
     </section>
@@ -219,7 +225,19 @@
     const btnClear = el('btnClear');
     const preview = el('preview');
 
-    btnGenerate.addEventListener('click', () => {
+  btnGenerate.addEventListener('click', () => {
+    // X（旧Twitter）シェアボタン
+    const btnShareX = el('btnShareX');
+    if (btnShareX) {
+      btnShareX.addEventListener('click', () => {
+        const shareText = 'テキスト→画像 分割ツール"Textale" https://shayashida.github.io/Textale/';
+        const xUrl = `https://x.com/intent/tweet?text=${encodeURIComponent(shareText)}`;
+        const w = 600, h = 480;
+        const left = window.screenX + (window.outerWidth - w) / 2;
+        const top = window.screenY + (window.outerHeight - h) / 2;
+        window.open(xUrl, 'shareX', `width=${w},height=${h},left=${left},top=${top},menubar=no,toolbar=no,status=no,scrollbars=yes`);
+      });
+    }
       const text = (inputText.value || '').replace(/\r\n/g, '\n');
       if (!text.trim()) {
         preview.innerHTML = '<div class="note">テキストを入力してください。</div>';
