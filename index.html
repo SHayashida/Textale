@@ -163,6 +163,22 @@
             max-width: 90vw;
             max-height: 90vh;
         }
+        /* HTMLフォールバック描画用 */
+        #modal-html {
+            background-color: white;
+            color: black;
+            font-family: var(--font-family);
+            font-size: var(--font-size);
+            line-height: var(--line-height);
+            padding: var(--padding);
+            width: var(--image-width);
+            height: var(--image-height);
+            box-sizing: border-box;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            transform-origin: top left;
+            display: none;
+        }
         #modal-image {
             max-width: 100%;
             max-height: 100%;
@@ -235,6 +251,7 @@
     <div id="modal-overlay">
         <div id="modal-content">
             <img id="modal-image" src="" alt="拡大プレビュー画像">
+            <div id="modal-html"></div>
         </div>
         <button id="modal-close" class="modal-nav">×</button>
         <button id="modal-prev" class="modal-nav">&lt;</button>
@@ -271,6 +288,7 @@
         let isGenerating = false;
         let modalCurrentPage = 1;
         let imageDataUrls = [];
+        let useHtmlFallback = false;
 
         function paginateText(text) {
             if (!text) return [''];
@@ -366,17 +384,24 @@
                 const blob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
                 const url = URL.createObjectURL(blob);
                 
-                await new Promise((resolve, reject) => {
+                const ok = await new Promise((resolve) => {
                     img.onload = () => {
                         ctx.clearRect(0, 0, canvas.width, canvas.height);
                         ctx.drawImage(img, 0, 0);
                         URL.revokeObjectURL(url);
                         generatedUrls.push(canvas.toDataURL('image/png'));
-                        resolve();
+                        resolve(true);
                     };
-                    img.onerror = reject;
+                    img.onerror = () => {
+                        URL.revokeObjectURL(url);
+                        resolve(false);
+                    };
                     img.src = url;
                 });
+                if (!ok) {
+                    useHtmlFallback = true;
+                    break;
+                }
             }
 
             imageDataUrls = generatedUrls;
@@ -387,7 +412,21 @@
 
         function showModal(pageNumber) {
             modalCurrentPage = pageNumber;
-            modalImage.src = imageDataUrls[modalCurrentPage - 1];
+            if (useHtmlFallback) {
+                // 画像生成が使えない環境: HTML をそのまま拡大描画
+                modalImage.style.display = 'none';
+                const modalHtml = document.getElementById('modal-html');
+                modalHtml.style.display = 'block';
+                modalHtml.textContent = pages[modalCurrentPage - 1];
+                fitModalHtml(modalHtml);
+            } else {
+                // 通常: 生成済み画像を表示
+                const url = imageDataUrls[modalCurrentPage - 1];
+                modalImage.src = url || '';
+                modalImage.style.display = 'block';
+                const modalHtml = document.getElementById('modal-html');
+                modalHtml.style.display = 'none';
+            }
             modalIndicator.textContent = `${modalCurrentPage} / ${pages.length}`;
             modalPrev.style.display = modalCurrentPage === 1 ? 'none' : 'flex';
             modalNext.style.display = modalCurrentPage === pages.length ? 'none' : 'flex';
@@ -415,6 +454,23 @@
         modalOverlay.addEventListener('click', (e) => { if (e.target === modalOverlay) hideModal(); });
         modalPrev.addEventListener('click', () => { if (modalCurrentPage > 1) showModal(modalCurrentPage - 1); });
         modalNext.addEventListener('click', () => { if (modalCurrentPage < pages.length) showModal(modalCurrentPage + 1); });
+
+        function fitModalHtml(el) {
+            const container = document.getElementById('modal-content');
+            const containerW = container.clientWidth;
+            const containerH = container.clientHeight;
+            const elW = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-width'));
+            const elH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-height'));
+            const scale = Math.min(containerW / elW, containerH / elH);
+            el.style.transform = `scale(${scale})`;
+        }
+
+        window.addEventListener('resize', () => {
+            const modalHtml = document.getElementById('modal-html');
+            if (modalOverlay.style.display === 'flex' && useHtmlFallback && modalHtml.style.display === 'block') {
+                fitModalHtml(modalHtml);
+            }
+        });
         
         function escapeHTML(str) {
             return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
