@@ -1,345 +1,390 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Textale（修正版）</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&display=swap" rel="stylesheet">
-    
-    <style>
-        :root {
-            /* 画像設定: iPhone 14 Pro Max の比率に固定 */
-            --image-width: 430px;
-            --image-height: 932px;
-            --font-size: 20px;
-            --line-height: 1.8;
-            --padding: 30px;
-            --font-family: 'Noto Serif JP', serif;
-
-            /* アプリのUIカラー */
-            --bg-color: #f0f2f5;
-            --text-color: #1c1e21;
-            --primary-color: #0866ff;
-            --container-bg: #ffffff;
-            --border-color: #dddfe2;
-            --overflow-bg: rgba(255, 0, 0, 0.1);
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            margin: 0;
-            padding: 1.5rem;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            min-height: 100vh;
-            box-sizing: border-box;
-        }
-
-        main {
-            display: flex;
-            flex-direction: column;
-            gap: 2rem;
-            width: 100%;
-            max-width: 800px; /* スマホ準拠のシングルカラムレイアウトに */
-        }
-
-        .editor, .preview-container {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
-
-        .editor-textarea {
-            width: 100%;
-            height: 40vh;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 1rem;
-            font-size: 16px;
-            resize: vertical;
-            box-sizing: border-box;
-        }
-
-        .preview-area {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        #preview-box {
-            width: 100%;
-            /* アスペクト比を保ったまま高さを計算 */
-            height: calc(100% * (var(--image-height) / var(--image-width)));
-            max-width: var(--image-width);
-            max-height: calc(var(--image-width) * (var(--image-height) / var(--image-width)));
-            background-color: var(--container-bg);
-            border: 1px solid var(--border-color);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            overflow: hidden;
-            position: relative;
-        }
-        
-        #preview-content-wrapper {
-            /* スケーリング用のラッパー */
-            width: var(--image-width);
-            height: var(--image-height);
-            transform-origin: top left;
-        }
-
-        #preview-content {
-            font-family: var(--font-family);
-            font-size: var(--font-size);
-            line-height: var(--line-height);
-            padding: var(--padding);
-            box-sizing: border-box;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            color: #000;
-            background: var(--container-bg);
-            width: 100%;
-            height: 100%;
-        }
-        
-        .overflow-marker { background-color: var(--overflow-bg); }
-
-        .controls {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 1rem;
-            width: 100%;
-        }
-        
-        .pagination { display: flex; align-items: center; gap: 1rem; }
-
-        .pagination button {
-            padding: 0.5rem 1rem;
-            border: 1px solid var(--border-color);
-            background-color: var(--container-bg);
-            cursor: pointer;
-            border-radius: 4px;
-        }
-        .pagination button:disabled { cursor: not-allowed; opacity: 0.5; }
-
-        #expand-btn {
-            background-color: var(--primary-color);
-            color: white;
-            font-size: 1.1rem;
-            font-weight: bold;
-            padding: 0.8rem 1.5rem;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: opacity 0.2s;
-        }
-        #expand-btn:disabled { background-color: #a0a0a0; cursor: not-allowed; }
-        
-        #status-message { color: #555; font-size: 0.9rem; min-height: 1.2em; text-align: center; }
-
-        #measuring-div {
-            position: absolute; top: -9999px; left: -9999px; visibility: hidden;
-            width: var(--image-width); background-color: white;
-            font-family: var(--font-family); font-size: var(--font-size);
-            line-height: var(--line-height); padding: var(--padding);
-            box-sizing: border-box; white-space: pre-wrap; word-wrap: break-word;
-        }
-        
-        #modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(0, 0, 0, 0.85); display: none;
-            justify-content: center; align-items: center; z-index: 1000;
-        }
-        #modal-content {
-            position: relative; width: 90vw; height: 90vh;
-            display: flex; justify-content: center; align-items: center;
-        }
-        #modal-html {
-            background-color: white; color: black;
-            font-family: var(--font-family); font-size: var(--font-size);
-            line-height: var(--line-height); padding: var(--padding);
-            width: var(--image-width); height: var(--image-height);
-            box-sizing: border-box; white-space: pre-wrap; word-wrap: break-word;
-            /* transform-origin: top left;  <-- この行を削除 */
-            overflow: hidden;
-            flex-shrink: 0; /* 追加: flexアイテムが縮小しないように */
-        }
-        .modal-nav {
-            position: absolute; top: 50%; transform: translateY(-50%);
-            background-color: rgba(0,0,0,0.5); color: white; border: none;
-            font-size: 2rem; cursor: pointer; padding: 1rem; border-radius: 50%;
-            width: 50px; height: 50px; display: flex; justify-content: center; align-items: center;
-            -webkit-tap-highlight-color: transparent;
-        }
-        #modal-prev { left: 5px; } #modal-next { right: 5px; }
-        #modal-close { top: 5px; right: 5px; font-size: 1.5rem; width: 40px; height: 40px; padding: 0; }
-        #modal-indicator {
-            position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
-            background-color: rgba(0,0,0,0.7); color: white;
-            padding: 0.5rem 1rem; border-radius: 1rem; font-size: 1rem;
-        }
-    </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Textale</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP", Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      margin: 0;
+      background: #f6f7f9;
+      color: #111;
+    }
+    header {
+      padding: 16px;
+      background: #ffffff;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      box-shadow: 0 1px 0 rgba(0,0,0,0.06);
+    }
+    h1 {
+      margin: 0 0 4px 0;
+      font-size: 18px;
+    }
+    .container {
+      padding: 16px;
+      display: grid;
+      gap: 16px;
+    }
+    .panel {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 12px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+    @media (min-width: 840px) {
+      .grid-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+    }
+    textarea {
+      width: 100%;
+      min-height: 220px;
+      resize: vertical;
+      font-size: 16px;
+      padding: 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      box-sizing: border-box;
+    }
+    label {
+      font-size: 12px;
+      color: #374151;
+      display: block;
+      margin-bottom: 6px;
+    }
+    .row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+    input[type="number"], input[type="text"], input[type="color"], select {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 14px;
+      box-sizing: border-box;
+      background: #fff;
+    }
+    .actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    button {
+      cursor: pointer;
+      padding: 10px 14px;
+      border-radius: 8px;
+      border: 1px solid #111827;
+      background: #111827;
+      color: #fff;
+      font-weight: 600;
+    }
+    button.secondary {
+      background: #fff;
+      color: #111827;
+    }
+    .preview {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 12px;
+    }
+    .card {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .card img {
+      display: block;
+      width: 100%;
+      height: auto;
+      background: #fff;
+    }
+    .card .card-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px;
+      font-size: 12px;
+    }
+    .note {
+      font-size: 12px;
+      color: #6b7280;
+    }
+  </style>
+  <meta name="description" content="長文テキストを指定サイズの画像に自動分割。ダブル改行でページ送り。スマホからそのまま保存できます。" />
 </head>
 <body>
+  <header>
+    <h1>テキスト → 画像 分割ツール</h1>
+    <div class="note">最小実装: ダブル改行で次の画像に繰り下げ。自動折り返し・高さあふれでページ分割。PNG保存対応。</div>
+  </header>
 
-    <main>
-        <section class="editor">
-            <h2>テキスト入力</h2>
-            <textarea id="text-input" class="editor-textarea" placeholder="ここに小説などの長文テキストを入力してください..."></textarea>
-        </section>
+  <main class="container">
+    <section class="panel grid">
+      <div>
+        <label for="inputText">テキスト</label>
+        <textarea id="inputText" placeholder="ここに小説や長文を貼り付けてください。\n\nダブル改行で次の画像へ送られます。\n\n例：\n一枚目の内容...\nまだ一枚目...\n\n二枚目の先頭...\n..."></textarea>
+      </div>
 
-        <section class="preview-container">
-            <h2>リアルタイムプレビュー</h2>
-            <div class="preview-area">
-                <div id="preview-box">
-                    <div id="preview-content-wrapper">
-                        <div id="preview-content"></div>
-                    </div>
-                </div>
-                <div class="controls">
-                    <div class="pagination">
-                        <button id="prev-page">&lt;</button>
-                        <span id="page-indicator">1 / 1</span>
-                        <button id="next-page">&gt;</button>
-                    </div>
-                     <button id="expand-btn" disabled>スクリーンショットモード</button>
-                     <p id="status-message">ヒント: 拡大後、スクリーンショットで保存します。</p>
-                </div>
-            </div>
-        </section>
-    </main>
-
-    <div id="measuring-div"></div>
-
-    <div id="modal-overlay">
-        <div id="modal-content">
-            <div id="modal-html"></div>
+      <div class="grid">
+        <div class="row">
+          <div>
+            <label for="width">画像の幅 (px)</label>
+            <input id="width" type="number" inputmode="numeric" value="1080" min="300" max="4096" />
+          </div>
+          <div>
+            <label for="height">画像の高さ (px)</label>
+            <input id="height" type="number" inputmode="numeric" value="1920" min="300" max="8192" />
+          </div>
         </div>
-        <button id="modal-close" class="modal-nav">×</button>
-        <button id="modal-prev" class="modal-nav">&lt;</button>
-        <button id="modal-next" class="modal-nav">&gt;</button>
-        <span id="modal-indicator"></span>
-    </div>
+        <div class="row">
+          <div>
+            <label for="fontSize">文字サイズ (px)</label>
+            <input id="fontSize" type="number" inputmode="numeric" value="42" min="14" max="128" />
+          </div>
+          <div>
+            <label for="lineHeight">行間 (倍)</label>
+            <input id="lineHeight" type="number" inputmode="decimal" step="0.05" value="1.6" min="1.0" max="2.5" />
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label for="padding">余白 (px)</label>
+            <input id="padding" type="number" inputmode="numeric" value="64" min="0" max="400" />
+          </div>
+          <div>
+            <label for="fontFamily">フォント</label>
+            <select id="fontFamily">
+              <option value="-apple-system, system-ui, 'Noto Sans JP', 'Hiragino Sans', Meiryo, sans-serif">San-Serif (推奨)</option>
+              <option value="'Noto Serif JP', 'Hiragino Mincho ProN', 'Yu Mincho', serif">Serif (明朝)</option>
+              <option value="'M PLUS 1p', 'Noto Sans JP', sans-serif">M PLUS 1p</option>
+              <option value="'Yu Gothic', 'Noto Sans JP', sans-serif">游ゴシック</option>
+            </select>
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label for="textColor">文字色</label>
+            <input id="textColor" type="color" value="#111111" />
+          </div>
+          <div>
+            <label for="bgColor">背景色</label>
+            <input id="bgColor" type="color" value="#ffffff" />
+          </div>
+        </div>
 
-    <script>
-        const textInput = document.getElementById('text-input'),
-              previewContent = document.getElementById('preview-content'),
-              previewContentWrapper = document.getElementById('preview-content-wrapper'),
-              previewBox = document.getElementById('preview-box'),
-              expandBtn = document.getElementById('expand-btn'),
-              prevPageBtn = document.getElementById('prev-page'),
-              nextPageBtn = document.getElementById('next-page'),
-              pageIndicator = document.getElementById('page-indicator'),
-              measuringDiv = document.getElementById('measuring-div'),
-              modalOverlay = document.getElementById('modal-overlay'),
-              modalHtml = document.getElementById('modal-html'),
-              modalClose = document.getElementById('modal-close'),
-              modalPrev = document.getElementById('modal-prev'),
-              modalNext = document.getElementById('modal-next'),
-              modalIndicator = document.getElementById('modal-indicator');
+        <div class="actions">
+          <button id="btnGenerate">画像を作成</button>
+          <button id="btnClear" class="secondary">リセット</button>
+        </div>
+        <div class="note">メモ: 文字サイズは全画像で一定。2行の改行 (空行1つ) で次の画像に繰り下がります。</div>
+      </div>
+    </section>
 
-        const IMAGE_WIDTH = 430, IMAGE_HEIGHT = 932, PADDING = 30,
-              CONTENT_HEIGHT = IMAGE_HEIGHT - (PADDING * 2);
+    <section class="panel">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px;">
+        <div><strong>プレビュー</strong></div>
+        <div class="note">各画像をタップ長押しで保存 (またはボタンで保存)。</div>
+      </div>
+      <div id="preview" class="preview"></div>
+    </section>
+  </main>
 
-        let currentPage = 1, pages = [''], modalCurrentPage = 1;
+  <script>
+    // メイン処理
+    const el = (id) => document.getElementById(id);
 
-        function paginateText(text) {
-            if (!text) return [''];
-            const normalizedText = text.replace(/\r\n/g, '\n');
-            const sections = normalizedText.split(/\n{2,}/);
-            const paginated = [];
-            for (const sectionText of sections) {
-                let currentSectionText = sectionText;
-                if (currentSectionText.trim().length === 0) continue;
-                while (currentSectionText.length > 0) {
-                    measuringDiv.textContent = '';
-                    let i = 0;
-                    for (i = 0; i < currentSectionText.length; i++) {
-                        measuringDiv.textContent = currentSectionText.substring(0, i + 1);
-                        if (measuringDiv.scrollHeight > CONTENT_HEIGHT) break;
-                    }
-                    paginated.push(currentSectionText.substring(0, i));
-                    currentSectionText = currentSectionText.substring(i);
-                }
-            }
-            return paginated.length > 0 ? paginated : [''];
+    const inputText = el('inputText');
+    const inputWidth = el('width');
+    const inputHeight = el('height');
+    const inputFontSize = el('fontSize');
+    const inputLineHeight = el('lineHeight');
+    const inputPadding = el('padding');
+    const inputFontFamily = el('fontFamily');
+    const inputTextColor = el('textColor');
+    const inputBgColor = el('bgColor');
+    const btnGenerate = el('btnGenerate');
+    const btnClear = el('btnClear');
+    const preview = el('preview');
+
+    btnGenerate.addEventListener('click', () => {
+      const text = (inputText.value || '').replace(/\r\n/g, '\n');
+      if (!text.trim()) {
+        preview.innerHTML = '<div class="note">テキストを入力してください。</div>';
+        return;
+      }
+      const width = clamp(parseInt(inputWidth.value || '1080', 10), 300, 4096);
+      const height = clamp(parseInt(inputHeight.value || '1920', 10), 300, 8192);
+      const fontSize = clamp(parseInt(inputFontSize.value || '42', 10), 10, 256);
+      const lineHeightMul = clamp(parseFloat(inputLineHeight.value || '1.6'), 1.0, 3.0);
+      const padding = clamp(parseInt(inputPadding.value || '64', 10), 0, Math.floor(Math.min(width, height) / 2));
+      const fontFamily = inputFontFamily.value || "-apple-system, system-ui, 'Noto Sans JP', 'Hiragino Sans', Meiryo, sans-serif";
+      const textColor = inputTextColor.value || '#111111';
+      const bgColor = inputBgColor.value || '#ffffff';
+
+      const pages = textToImages({ text, width, height, fontSize, lineHeightMul, padding, fontFamily, textColor, bgColor });
+      renderPreview(pages);
+    });
+
+    btnClear.addEventListener('click', () => {
+      inputText.value = '';
+      preview.innerHTML = '';
+    });
+
+    function clamp(v, min, max) { return Math.min(Math.max(v, min), max); }
+
+    function textToImages(options) {
+      const { text, width, height, fontSize, lineHeightMul, padding, fontFamily, textColor, bgColor } = options;
+      const lineHeight = Math.round(fontSize * lineHeightMul);
+      const maxTextWidth = Math.max(0, width - padding * 2);
+
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx.textBaseline = 'top';
+      ctx.fillStyle = textColor;
+      ctx.font = `${fontSize}px ${fontFamily}`;
+
+      function drawBackground() {
+        ctx.fillStyle = bgColor;
+        ctx.fillRect(0, 0, width, height);
+        ctx.fillStyle = textColor;
+      }
+
+      // ページ管理
+      const dataUrls = [];
+      let cursorY = padding;
+      let hasContentOnPage = false;
+
+      function commitPageIfHasContent() {
+        if (!hasContentOnPage) return;
+        // 既存キャンバスをエクスポート
+        dataUrls.push(canvas.toDataURL('image/png'));
+        // 新しいページを準備
+        drawBackground();
+        cursorY = padding;
+        hasContentOnPage = false;
+      }
+
+      // 初期背景
+      drawBackground();
+
+      // ダブル改行でチャンク分割 (空行1つでページ送り)
+      const chunks = text.split(/\n\s*\n/g);
+      for (let c = 0; c < chunks.length; c++) {
+        const chunk = chunks[c];
+        const lines = wrapToLines(chunk, ctx, maxTextWidth);
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i];
+          if (cursorY + lineHeight > height - padding) {
+            commitPageIfHasContent();
+          }
+          // 描画
+          if (line === '') {
+            // 空行は高さだけ進める
+            cursorY += lineHeight;
+          } else {
+            ctx.fillText(line, padding, cursorY);
+            cursorY += lineHeight;
+            hasContentOnPage = true;
+          }
         }
+        // チャンク末尾でページ送り (ダブル改行の仕様)
+        commitPageIfHasContent();
+      }
 
-        function renderPreview() {
-            if (pages.length === 0) { previewContent.innerHTML = ''; return; }
-            const textForCurrentPage = pages[currentPage - 1];
-            previewContent.textContent = textForCurrentPage;
+      // 末尾が描画されたがコミットされていない場合はコミット
+      commitPageIfHasContent();
 
-            if (currentPage === 1 && pages.length > 1) {
-                const normalizedText = textInput.value.replace(/\r\n/g, '\n');
-                const firstValidSection = normalizedText.split(/\n{2,}/).find(s => s.trim().length > 0) || "";
-                if (firstValidSection.startsWith(pages[0]) && pages[0].length < firstValidSection.length) {
-                    previewContent.innerHTML = `<span>${textForCurrentPage}</span><span class="overflow-marker">${pages[1]}</span>`;
-                }
-            }
-            updateControls();
-            scalePreview();
-        }
-        
-        function updateControls() {
-            const totalPages = pages.length || 1;
-            pageIndicator.textContent = `${currentPage} / ${totalPages}`;
-            prevPageBtn.disabled = currentPage === 1;
-            nextPageBtn.disabled = currentPage === totalPages;
-            expandBtn.disabled = textInput.value.trim().length === 0;
-        }
+      return dataUrls;
+    }
 
-        function handleTextInput() {
-            pages = paginateText(textInput.value);
-            currentPage = 1;
-            renderPreview();
+    // 自動折り返し: 日本語は連続文字、英数はスペース優先で折り返し
+    function wrapToLines(text, ctx, maxWidth) {
+      const result = [];
+      const paragraphs = text.split('\n');
+      for (let p = 0; p < paragraphs.length; p++) {
+        const para = paragraphs[p];
+        if (para.length === 0) {
+          result.push('');
+          continue;
         }
+        let line = '';
+        for (let i = 0; i < para.length; i++) {
+          const ch = para[i];
+          const test = line + ch;
+          if (ctx.measureText(test).width <= maxWidth) {
+            line = test;
+            continue;
+          }
+          if (line.length === 0) {
+            // 1文字でも超える場合は強制改行
+            result.push(ch);
+            line = '';
+            continue;
+          }
+          const lastSpace = line.lastIndexOf(' ');
+          if (lastSpace > 0) {
+            result.push(line.slice(0, lastSpace));
+            line = line.slice(lastSpace + 1) + ch;
+          } else {
+            result.push(line);
+            line = ch;
+          }
+        }
+        if (line.length > 0) result.push(line);
+      }
+      return result;
+    }
 
-        function showModal(pageNumber) {
-            modalCurrentPage = pageNumber;
-            modalHtml.textContent = pages[modalCurrentPage - 1];
-            modalIndicator.textContent = `${modalCurrentPage} / ${pages.length}`;
-            modalPrev.style.display = modalCurrentPage === 1 ? 'none' : 'flex';
-            modalNext.style.display = modalCurrentPage === pages.length ? 'none' : 'flex';
-            modalOverlay.style.display = 'flex';
-            fitModalHtml();
-        }
-        
-        function hideModal() { modalOverlay.style.display = 'none'; }
-        
-        function fitModalHtml() {
-            const containerW = modalHtml.parentElement.clientWidth, containerH = modalHtml.parentElement.clientHeight,
-                  scale = Math.min(containerW / IMAGE_WIDTH, containerH / IMAGE_HEIGHT);
-            modalHtml.style.transform = `scale(${scale})`;
-        }
+    function renderPreview(urls) {
+      preview.innerHTML = '';
+      if (!urls || urls.length === 0) {
+        preview.innerHTML = '<div class="note">画像はまだありません。</div>';
+        return;
+      }
+      urls.forEach((url, idx) => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        const img = document.createElement('img');
+        img.loading = 'lazy';
+        img.alt = `画像 ${idx + 1}`;
+        img.src = url;
 
-        function scalePreview() {
-            const scale = previewBox.clientWidth / IMAGE_WIDTH;
-            previewContentWrapper.style.transform = `scale(${scale})`;
-        }
+        const footer = document.createElement('div');
+        footer.className = 'card-footer';
+        const label = document.createElement('div');
+        label.textContent = `画像 ${idx + 1}`;
+        const actions = document.createElement('div');
+        const a = document.createElement('a');
+        a.textContent = '保存';
+        a.href = url;
+        a.download = `text-image-${idx + 1}.png`;
+        a.className = 'secondary button-link';
+        actions.appendChild(a);
+        footer.appendChild(label);
+        footer.appendChild(actions);
 
-        textInput.addEventListener('input', handleTextInput);
-        prevPageBtn.addEventListener('click', () => { if (currentPage > 1) { currentPage--; renderPreview(); } });
-        nextPageBtn.addEventListener('click', () => { if (currentPage < pages.length) { currentPage++; renderPreview(); } });
-        expandBtn.addEventListener('click', () => showModal(currentPage));
-        
-        modalClose.addEventListener('click', hideModal);
-        modalOverlay.addEventListener('click', (e) => { if (e.target === modalOverlay) hideModal(); });
-        modalPrev.addEventListener('click', () => { if (modalCurrentPage > 1) showModal(modalCurrentPage - 1); });
-        modalNext.addEventListener('click', () => { if (modalCurrentPage < pages.length) showModal(modalCurrentPage + 1); });
-        
-        window.addEventListener('resize', () => {
-            scalePreview();
-            if (modalOverlay.style.display === 'flex') fitModalHtml();
-        });
-        
-        document.addEventListener('DOMContentLoaded', handleTextInput);
-    </script>
+        card.appendChild(img);
+        card.appendChild(footer);
+        preview.appendChild(card);
+      });
+    }
+  </script>
 </body>
 </html>
+
+
