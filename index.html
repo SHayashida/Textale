@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Textale（スクショ対応版）</title>
+    <title>Textale（スマホ対応版）</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&display=swap" rel="stylesheet">
@@ -38,6 +38,7 @@
             align-items: flex-start;
             gap: 2rem;
             min-height: 100vh;
+            box-sizing: border-box;
         }
 
         main {
@@ -52,6 +53,7 @@
             display: flex;
             flex-direction: column;
             gap: 1rem;
+            min-width: 0; /* flexアイテムの縮小を許可 */
         }
 
         .editor-textarea {
@@ -127,96 +129,73 @@
         }
         #expand-btn:disabled { background-color: #a0a0a0; cursor: not-allowed; }
         
-        #status-message { color: #555; font-size: 0.9rem; min-height: 1.2em; }
+        #status-message { color: #555; font-size: 0.9rem; min-height: 1.2em; text-align: center; }
 
         #measuring-div {
-            position: absolute;
-            top: -9999px;
-            left: -9999px;
-            visibility: hidden;
-            width: var(--image-width);
-            background-color: white;
-            font-family: var(--font-family);
-            font-size: var(--font-size);
-            line-height: var(--line-height);
-            padding: var(--padding);
-            box-sizing: border-box;
-            white-space: pre-wrap;
-            word-wrap: break-word;
+            position: absolute; top: -9999px; left: -9999px; visibility: hidden;
+            width: var(--image-width); background-color: white;
+            font-family: var(--font-family); font-size: var(--font-size);
+            line-height: var(--line-height); padding: var(--padding);
+            box-sizing: border-box; white-space: pre-wrap; word-wrap: break-word;
         }
         
         /* --- モーダル表示用のスタイル --- */
         #modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.8);
-            display: none; /* 初期状態は非表示 */
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.85); display: none;
+            justify-content: center; align-items: center; z-index: 1000;
         }
         #modal-content {
-            position: relative;
-            max-width: 90vw;
-            max-height: 90vh;
+            position: relative; width: 90vw; height: 90vh;
+            display: flex; justify-content: center; align-items: center;
         }
         /* HTMLフォールバック描画用 */
         #modal-html {
-            background-color: white;
-            color: black;
-            font-family: var(--font-family);
-            font-size: var(--font-size);
-            line-height: var(--line-height);
-            padding: var(--padding);
-            width: var(--image-width);
-            height: var(--image-height);
-            box-sizing: border-box;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            transform-origin: top left;
-            display: none;
+            background-color: white; color: black;
+            font-family: var(--font-family); font-size: var(--font-size);
+            line-height: var(--line-height); padding: var(--padding);
+            width: var(--image-width); height: var(--image-height);
+            box-sizing: border-box; white-space: pre-wrap; word-wrap: break-word;
+            transform-origin: top left; display: none; overflow: hidden;
         }
         #modal-image {
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: contain;
-            display: block;
+            max-width: 100%; max-height: 100%; object-fit: contain; display: block;
         }
         .modal-nav {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            background-color: rgba(0,0,0,0.5);
-            color: white;
-            border: none;
-            font-size: 2rem;
-            cursor: pointer;
-            padding: 1rem;
-            border-radius: 50%;
-            width: 60px;
-            height: 60px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            position: absolute; top: 50%; transform: translateY(-50%);
+            background-color: rgba(0,0,0,0.5); color: white; border: none;
+            font-size: 2rem; cursor: pointer; padding: 1rem; border-radius: 50%;
+            width: 50px; height: 50px; display: flex; justify-content: center; align-items: center;
+            -webkit-tap-highlight-color: transparent; /* スマホでのタップ時のハイライトを無効化 */
         }
-        #modal-prev { left: 10px; }
-        #modal-next { right: 10px; }
-        #modal-close { top: 10px; right: 10px; font-size: 1.5rem; width: 40px; height: 40px; padding: 0; }
+        #modal-prev { left: 5px; }
+        #modal-next { right: 5px; }
+        #modal-close { top: 5px; right: 5px; font-size: 1.5rem; width: 40px; height: 40px; padding: 0; }
         #modal-indicator {
-            position: absolute;
-            bottom: 15px;
-            left: 50%;
-            transform: translateX(-50%);
-            background-color: rgba(0,0,0,0.7);
-            color: white;
-            padding: 0.5rem 1rem;
-            border-radius: 1rem;
-            font-size: 1rem;
+            position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
+            background-color: rgba(0,0,0,0.7); color: white;
+            padding: 0.5rem 1rem; border-radius: 1rem; font-size: 1rem;
         }
 
+        /* --- レスポンシブ対応 --- */
+        @media (max-width: 900px) {
+            body {
+                padding: 1rem;
+            }
+            main {
+                flex-direction: column;
+                gap: 1.5rem;
+            }
+            .editor-textarea {
+                height: 35vh;
+            }
+            #preview-box {
+                /* プレビューサイズを画面幅に合わせる */
+                width: calc(100% - 2rem);
+                height: calc((100% - 2rem) * (var(--image-height) / var(--image-width)));
+                max-height: 50vh;
+            }
+        }
     </style>
 </head>
 <body>
@@ -240,7 +219,7 @@
                         <button id="next-page">&gt;</button>
                     </div>
                      <button id="expand-btn" disabled>プレビューを拡大表示</button>
-                     <p id="status-message">ヒント: 拡大表示後、画像を長押しして保存するか、スクリーンショットを撮影してください。</p>
+                     <p id="status-message">ヒント: 拡大後、スクショ等で保存してください。</p>
                 </div>
             </div>
         </section>
@@ -261,34 +240,29 @@
 
     <script>
         // DOM要素
-        const textInput = document.getElementById('text-input');
-        const previewContent = document.getElementById('preview-content');
-        const expandBtn = document.getElementById('expand-btn');
-        const prevPageBtn = document.getElementById('prev-page');
-        const nextPageBtn = document.getElementById('next-page');
-        const pageIndicator = document.getElementById('page-indicator');
-        const measuringDiv = document.getElementById('measuring-div');
-        const statusMessage = document.getElementById('status-message');
-        const modalOverlay = document.getElementById('modal-overlay');
-        const modalImage = document.getElementById('modal-image');
-        const modalClose = document.getElementById('modal-close');
-        const modalPrev = document.getElementById('modal-prev');
-        const modalNext = document.getElementById('modal-next');
-        const modalIndicator = document.getElementById('modal-indicator');
+        const textInput = document.getElementById('text-input'),
+              previewContent = document.getElementById('preview-content'),
+              expandBtn = document.getElementById('expand-btn'),
+              prevPageBtn = document.getElementById('prev-page'),
+              nextPageBtn = document.getElementById('next-page'),
+              pageIndicator = document.getElementById('page-indicator'),
+              measuringDiv = document.getElementById('measuring-div'),
+              statusMessage = document.getElementById('status-message'),
+              modalOverlay = document.getElementById('modal-overlay'),
+              modalImage = document.getElementById('modal-image'),
+              modalHtml = document.getElementById('modal-html'),
+              modalClose = document.getElementById('modal-close'),
+              modalPrev = document.getElementById('modal-prev'),
+              modalNext = document.getElementById('modal-next'),
+              modalIndicator = document.getElementById('modal-indicator');
 
         // 定数
-        const IMAGE_WIDTH = 800;
-        const IMAGE_HEIGHT = 1200;
-        const PADDING = 60;
-        const CONTENT_HEIGHT = IMAGE_HEIGHT - (PADDING * 2);
+        const IMAGE_WIDTH = 800, IMAGE_HEIGHT = 1200, PADDING = 60,
+              CONTENT_HEIGHT = IMAGE_HEIGHT - (PADDING * 2);
 
         // 状態
-        let currentPage = 1;
-        let pages = [''];
-        let isGenerating = false;
-        let modalCurrentPage = 1;
-        let imageDataUrls = [];
-        let useHtmlFallback = false;
+        let currentPage = 1, pages = [''], isGenerating = false, modalCurrentPage = 1,
+            imageDataUrls = [], useHtmlFallback = false;
 
         function paginateText(text) {
             if (!text) return [''];
@@ -313,18 +287,13 @@
         }
 
         function renderPreview() {
-            if (pages.length === 0) {
-                previewContent.innerHTML = '';
-                return;
-            }
+            if (pages.length === 0) { previewContent.innerHTML = ''; return; }
             const textForCurrentPage = pages[currentPage - 1];
             previewContent.textContent = textForCurrentPage;
 
             if (currentPage === 1 && pages.length > 1) {
-                const fullText = textInput.value;
-                const normalizedText = fullText.replace(/\r\n/g, '\n');
+                const normalizedText = textInput.value.replace(/\r\n/g, '\n');
                 const firstValidSection = normalizedText.split(/\n{2,}/).find(s => s.trim().length > 0) || "";
-
                 if (firstValidSection.startsWith(pages[0]) && pages[0].length < firstValidSection.length) {
                     previewContent.innerHTML = `<span>${textForCurrentPage}</span><span class="overflow-marker">${pages[1]}</span>`;
                 }
@@ -346,45 +315,26 @@
             renderPreview();
         }
 
-        // --- 画像生成とモーダル表示のロジック ---
-
         async function generateAllImages() {
-            isGenerating = true;
+            isGenerating = true; useHtmlFallback = false;
             updateControls();
             statusMessage.textContent = '画像を準備中です...';
             
             const canvas = document.createElement('canvas');
-            canvas.width = IMAGE_WIDTH;
-            canvas.height = IMAGE_HEIGHT;
+            canvas.width = IMAGE_WIDTH; canvas.height = IMAGE_HEIGHT;
             const ctx = canvas.getContext('2d');
             const generatedUrls = [];
 
             for (let i = 0; i < pages.length; i++) {
                 statusMessage.textContent = `画像を準備中... (${i + 1}/${pages.length})`;
                 const pageText = pages[i];
-                
-                const svgData = `
-                    <svg xmlns="http://www.w3.org/2000/svg" width="${IMAGE_WIDTH}" height="${IMAGE_HEIGHT}">
-                        <foreignObject width="100%" height="100%">
-                            <div xmlns="http://www.w3.org/1999/xhtml" style="
-                                background-color: white; color: black;
-                                font-family: 'Noto Serif JP', serif; /* 不具合修正：直接指定 */
-                                font-size: ${getComputedStyle(document.documentElement).getPropertyValue('--font-size')};
-                                line-height: ${getComputedStyle(document.documentElement).getPropertyValue('--line-height')};
-                                padding: ${getComputedStyle(document.documentElement).getPropertyValue('--padding')};
-                                width: ${IMAGE_WIDTH}px; height: ${IMAGE_HEIGHT}px;
-                                box-sizing: border-box; white-space: pre-wrap; word-wrap: break-word;
-                            ">
-                                ${escapeHTML(pageText)}
-                            </div>
-                        </foreignObject>
-                    </svg>`;
+                const svgData = `<svg xmlns="http://www.w3.org/2000/svg" width="${IMAGE_WIDTH}" height="${IMAGE_HEIGHT}"><foreignObject width="100%" height="100%"><div xmlns="http://www.w3.org/1999/xhtml" style="background-color: white; color: black; font-family: 'Noto Serif JP', serif; font-size: var(--font-size); line-height: var(--line-height); padding: var(--padding); width: ${IMAGE_WIDTH}px; height: ${IMAGE_HEIGHT}px; box-sizing: border-box; white-space: pre-wrap; word-wrap: break-word;">${escapeHTML(pageText)}</div></foreignObject></svg>`;
 
                 const img = new Image();
                 const blob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
                 const url = URL.createObjectURL(blob);
                 
-                const ok = await new Promise((resolve) => {
+                const success = await new Promise(resolve => {
                     img.onload = () => {
                         ctx.clearRect(0, 0, canvas.width, canvas.height);
                         ctx.drawImage(img, 0, 0);
@@ -392,39 +342,31 @@
                         generatedUrls.push(canvas.toDataURL('image/png'));
                         resolve(true);
                     };
-                    img.onerror = () => {
-                        URL.revokeObjectURL(url);
-                        resolve(false);
-                    };
+                    img.onerror = () => { URL.revokeObjectURL(url); resolve(false); };
                     img.src = url;
                 });
-                if (!ok) {
+                if (!success) {
                     useHtmlFallback = true;
+                    statusMessage.textContent = '一部ブラウザではHTMLで表示します';
                     break;
                 }
             }
-
             imageDataUrls = generatedUrls;
             isGenerating = false;
             updateControls();
-            statusMessage.textContent = 'ヒント: 拡大表示後、画像を長押しして保存するか、スクリーンショットを撮影してください。';
+            if(!useHtmlFallback) statusMessage.textContent = 'ヒント: 拡大後、スクショ等で保存してください。';
         }
 
         function showModal(pageNumber) {
             modalCurrentPage = pageNumber;
             if (useHtmlFallback) {
-                // 画像生成が使えない環境: HTML をそのまま拡大描画
                 modalImage.style.display = 'none';
-                const modalHtml = document.getElementById('modal-html');
                 modalHtml.style.display = 'block';
                 modalHtml.textContent = pages[modalCurrentPage - 1];
-                fitModalHtml(modalHtml);
+                fitModalHtml();
             } else {
-                // 通常: 生成済み画像を表示
-                const url = imageDataUrls[modalCurrentPage - 1];
-                modalImage.src = url || '';
+                modalImage.src = imageDataUrls[modalCurrentPage - 1];
                 modalImage.style.display = 'block';
-                const modalHtml = document.getElementById('modal-html');
                 modalHtml.style.display = 'none';
             }
             modalIndicator.textContent = `${modalCurrentPage} / ${pages.length}`;
@@ -433,51 +375,30 @@
             modalOverlay.style.display = 'flex';
         }
         
-        function hideModal() {
-            modalOverlay.style.display = 'none';
+        function hideModal() { modalOverlay.style.display = 'none'; }
+        
+        function fitModalHtml() {
+            const containerW = modalHtml.parentElement.clientWidth, containerH = modalHtml.parentElement.clientHeight,
+                  scale = Math.min(containerW / IMAGE_WIDTH, containerH / IMAGE_HEIGHT);
+            modalHtml.style.transform = `scale(${scale})`;
         }
-
-        // --- イベントリスナー ---
 
         textInput.addEventListener('input', handleTextInput);
         prevPageBtn.addEventListener('click', () => { if (currentPage > 1) { currentPage--; renderPreview(); } });
         nextPageBtn.addEventListener('click', () => { if (currentPage < pages.length) { currentPage++; renderPreview(); } });
-        
         expandBtn.addEventListener('click', async () => {
-            await generateAllImages();
-            if (imageDataUrls.length > 0) {
-                showModal(currentPage);
-            }
+            if(imageDataUrls.length !== pages.length || useHtmlFallback) await generateAllImages();
+            showModal(currentPage);
         });
-
         modalClose.addEventListener('click', hideModal);
         modalOverlay.addEventListener('click', (e) => { if (e.target === modalOverlay) hideModal(); });
         modalPrev.addEventListener('click', () => { if (modalCurrentPage > 1) showModal(modalCurrentPage - 1); });
         modalNext.addEventListener('click', () => { if (modalCurrentPage < pages.length) showModal(modalCurrentPage + 1); });
-
-        function fitModalHtml(el) {
-            const container = document.getElementById('modal-content');
-            const containerW = container.clientWidth;
-            const containerH = container.clientHeight;
-            const elW = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-width'));
-            const elH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--image-height'));
-            const scale = Math.min(containerW / elW, containerH / elH);
-            el.style.transform = `scale(${scale})`;
-        }
-
-        window.addEventListener('resize', () => {
-            const modalHtml = document.getElementById('modal-html');
-            if (modalOverlay.style.display === 'flex' && useHtmlFallback && modalHtml.style.display === 'block') {
-                fitModalHtml(modalHtml);
-            }
-        });
+        window.addEventListener('resize', () => { if (modalOverlay.style.display === 'flex' && useHtmlFallback) fitModalHtml(); });
         
-        function escapeHTML(str) {
-            return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
-        }
+        function escapeHTML(str) { return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;'); }
 
-        handleTextInput(); // 初期化
-
+        handleTextInput();
     </script>
 </body>
 </html>
